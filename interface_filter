@@ -2,6 +2,9 @@ import json
 import os
 import sys
 
+# Additional ports to always exclude
+EXCLUDED_PORTS = {"pv", "CPU", "for"}
+
 def refine_json_file(input_path, output_path):
     with open(input_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
@@ -11,9 +14,12 @@ def refine_json_file(input_path, output_path):
         return
 
     # Step 1: Collect ports associated with VLAN 100
-    ports_to_remove = {entry["port"] for entry in data if entry.get("vlan") == "100"}
+    vlan_100_ports = {entry["port"] for entry in data if entry.get("vlan") == "100"}
 
-    # Step 2: Filter out any entries that use those ports
+    # Step 2: Combine with excluded ports
+    ports_to_remove = vlan_100_ports.union(EXCLUDED_PORTS)
+
+    # Step 3: Filter out any entries that use those ports
     filtered = [entry for entry in data if entry.get("port") not in ports_to_remove]
 
     with open(output_path, 'w', encoding='utf-8') as f:
